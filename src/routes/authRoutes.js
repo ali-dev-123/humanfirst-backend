@@ -6,6 +6,9 @@ const {
 const {
   authenticateToken,
 } = require("../middleware/authMiddleware");
+const {
+  authorizeRoles,
+} = require("../middleware/roleMiddleware");
 
 const router = express.Router();
 
@@ -18,4 +21,16 @@ router.get("/me", authenticateToken, (req, res) => {
     user: req.user,
   });
 });
+router.get(
+  "/admin-test",
+  authenticateToken,
+  authorizeRoles("ADMIN"),
+  (req, res) => {
+    return res.status(200).json({
+      success: true,
+      message: "Welcome to the HumanFirst admin area",
+      user: req.user,
+    });
+  }
+);
 module.exports = router;
