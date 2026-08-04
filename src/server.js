@@ -2,6 +2,7 @@ require("dotenv").config();
 
 const express = require("express");
 const prisma = require("./config/prisma");
+const authRoutes = require("./routes/authRoutes");
 
 const app = express();
 
@@ -9,6 +10,7 @@ const PORT = process.env.PORT || 5000;
 
 // Allows the backend to read JSON data
 app.use(express.json());
+app.use("/api/auth", authRoutes);
 
 // Test route
 app.get("/", (req, res) => {
