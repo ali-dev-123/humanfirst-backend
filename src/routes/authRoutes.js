@@ -5,6 +5,16 @@ const {
   forgotPassword,
   resetPassword,
 } = require("../controllers/authController");
+
+const validate = require("../middleware/validate");
+
+const {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} = require("../validators/authValidator");
+
 const {
   authenticateToken,
 } = require("../middleware/authMiddleware");
@@ -14,10 +24,28 @@ const {
 
 const router = express.Router();
 
-router.post("/register", register);
-router.post("/login", login);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password", resetPassword);
+router.post(
+  "/register",
+  validate(registerSchema),
+  register
+);
+
+router.post(
+  "/login",
+  validate(loginSchema),
+  login
+);
+router.post(
+  "/forgot-password",
+  validate(forgotPasswordSchema),
+  forgotPassword
+);
+
+router.post(
+  "/reset-password",
+  validate(resetPasswordSchema),
+  resetPassword
+);
 router.get("/me", authenticateToken, (req, res) => {
   return res.status(200).json({
     success: true,
