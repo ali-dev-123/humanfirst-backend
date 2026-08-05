@@ -2,6 +2,8 @@ const express = require("express");
 const {
   register,
   login,
+  forgotPassword,
+  resetPassword,
 } = require("../controllers/authController");
 const {
   authenticateToken,
@@ -14,6 +16,8 @@ const router = express.Router();
 
 router.post("/register", register);
 router.post("/login", login);
+router.post("/forgot-password", forgotPassword);
+router.post("/reset-password", resetPassword);
 router.get("/me", authenticateToken, (req, res) => {
   return res.status(200).json({
     success: true,

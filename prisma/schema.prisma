@@ -12,6 +12,8 @@ model User {
   email     String   @unique
   password  String
   role      UserRole @default(STUDENT)
+  resetToken       String?
+  resetTokenExpiry DateTime?  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
