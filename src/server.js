@@ -7,6 +7,7 @@ const authRoutes = require("./routes/authRoutes");
 const userRoutes = require("./routes/userRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const contactRoutes = require("./routes/contactRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 
 const app = express();
 app.use(cors());
@@ -19,6 +20,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/contact", contactRoutes);
+app.use("/api/search", searchRoutes);
 
 // Test route
 app.get("/", (req, res) => {
