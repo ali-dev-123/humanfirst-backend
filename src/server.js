@@ -8,14 +8,20 @@ const userRoutes = require("./routes/userRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const contactRoutes = require("./routes/contactRoutes");
 const searchRoutes = require("./routes/searchRoutes");
-
-const app = express();
-app.use(cors());
+const errorHandler = require("./middleware/errorHandler");
+const helmet = require("helmet");
+const apiLimiter = require("./middleware/rateLimiter");
+const sendEmail = require("./utils/sendEmail");
 
 const PORT = process.env.PORT || 5000;
 
+const app = express();
 // Allows the backend to read JSON data
 app.use(express.json());
+app.use(cors());
+app.use(helmet());
+app.use(apiLimiter);
+
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
@@ -46,6 +52,39 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+app.get("/api/test-email", async (req, res) => {
+  try {
+    await sendEmail(
+      process.env.EMAIL_USER,
+      "HumanFirst Test Email",
+      `
+        <h2>HumanFirst Email Test</h2>
+        <p>If you received this email, Nodemailer is configured successfully. 🎉</p>
+      `
+    );
+
+    res.status(200).json({
+      success: true,
+      message: "Test email sent successfully",
+    });
+  } catch (error) {
+    console.error("Email error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to send test email",
+    });
+  }
+});
+
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+app.use(errorHandler);
 
 // Start the server
 app.listen(PORT, () => {

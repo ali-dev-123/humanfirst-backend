@@ -2,6 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const prisma = require("../config/prisma");
+const sendEmail = require("../utils/sendEmail");
 
 const register = async (req, res) => {
   try {
@@ -139,11 +140,12 @@ const login = async (req, res) => {
   }
 };
 
+
+
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
 
-    // Check whether an email was provided
     if (!email) {
       return res.status(400).json({
         success: false,
@@ -151,30 +153,25 @@ const forgotPassword = async (req, res) => {
       });
     }
 
-    // Find the user
     const user = await prisma.user.findUnique({
       where: {
         email,
       },
     });
 
-    // For now, return an error if the email is not registered
     if (!user) {
       return res.status(404).json({
-        success: false,
-        message: "No user found with this email",
+        "success": true,
+        "message": "If an account with that email exists, a password reset email has been sent."
       });
     }
 
-    // Generate a secure random reset token
     const resetToken = crypto.randomBytes(32).toString("hex");
 
-    // Set token expiry to 15 minutes from now
     const resetTokenExpiry = new Date(
       Date.now() + 15 * 60 * 1000
     );
 
-    // Save the token and expiry in PostgreSQL
     await prisma.user.update({
       where: {
         id: user.id,
@@ -185,13 +182,38 @@ const forgotPassword = async (req, res) => {
       },
     });
 
-    // Temporary: return the token for Postman testing
+    const resetLink = `${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`;
+    
+    await sendEmail(
+      user.email,
+      "HumanFirst Password Reset",
+      `
+      <h2>Password Reset Request</h2>
+
+      <p>Hello ${user.name},</p>
+
+      <p>We received a request to reset your HumanFirst password.</p>
+
+      <p>Click the link below to reset your password:</p>
+
+      <a href="${resetLink}">Reset Password</a>
+
+      <p>This link expires in <strong>15 minutes</strong>.</p>
+
+      <p>If you did not request a password reset, you can safely ignore this email.</p>
+
+      <br>
+
+      <p>HumanFirst Team</p>
+      `
+    );
+
     return res.status(200).json({
       success: true,
-      message: "Password reset token generated successfully",
-      resetToken,
-      expiresIn: "15 minutes",
+      message:
+        "If an account with that email exists, a password reset email has been sent.",
     });
+
   } catch (error) {
     console.error("Forgot password error:", error);
 
