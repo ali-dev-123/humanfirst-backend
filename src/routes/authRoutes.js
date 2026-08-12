@@ -4,6 +4,7 @@ const {
   login,
   forgotPassword,
   resetPassword,
+  googleAuth,
 } = require("../controllers/authController");
 
 const validate = require("../middleware/validate");
@@ -11,6 +12,7 @@ const validate = require("../middleware/validate");
 const {
   registerSchema,
   loginSchema,
+  googleAuthSchema,
   forgotPasswordSchema,
   resetPasswordSchema,
 } = require("../validators/authValidator");
@@ -34,6 +36,11 @@ router.post(
   "/login",
   validate(loginSchema),
   login
+);
+router.post(
+  "/google",
+  validate(googleAuthSchema),
+  googleAuth
 );
 router.post(
   "/forgot-password",

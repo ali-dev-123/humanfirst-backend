@@ -1,8 +1,39 @@
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
+const { OAuth2Client } = require("google-auth-library");
 const prisma = require("../config/prisma");
 const sendEmail = require("../utils/sendEmail");
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+const createAuthToken = (user) => {
+  return jwt.sign(
+    {
+      userId: user.id,
+      email: user.email,
+      role: user.role,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+    }
+  );
+};
+
+const buildAuthResponse = (user, message = "Login successful") => {
+  return {
+    success: true,
+    message,
+    token: createAuthToken(user),
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+  };
+};
 
 const register = async (req, res) => {
   try {
@@ -119,17 +150,7 @@ const login = async (req, res) => {
     );
 
     // Send a safe response
-    return res.status(200).json({
-      success: true,
-      message: "Login successful",
-      token,
-      user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+    return res.status(200).json(buildAuthResponse(user));
   } catch (error) {
     console.error("Login error:", error);
 
@@ -140,7 +161,104 @@ const login = async (req, res) => {
   }
 };
 
+const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
 
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential is required",
+      });
+    }
+
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      return res.status(500).json({
+        success: false,
+        message: "Google client ID is not configured",
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+
+    if (!payload) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Google credential",
+      });
+    }
+
+    const {
+      email,
+      email_verified: emailVerified,
+      name,
+      iss,
+      aud,
+    } = payload;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google account email is missing",
+      });
+    }
+
+    if (!emailVerified) {
+      return res.status(401).json({
+        success: false,
+        message: "Google account email is not verified",
+      });
+    }
+
+    if (!["accounts.google.com", "https://accounts.google.com"].includes(iss)) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid Google token issuer",
+      });
+    }
+
+    if (aud !== process.env.GOOGLE_CLIENT_ID) {
+      return res.status(401).json({
+        success: false,
+        message: "Google token audience does not match",
+      });
+    }
+
+    let user = await prisma.user.findUnique({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      const randomPassword = crypto.randomBytes(32).toString("hex");
+      const hashedPassword = await bcrypt.hash(randomPassword, 12);
+
+      user = await prisma.user.create({
+        data: {
+          name: name || email,
+          email,
+          password: hashedPassword,
+          role: "STUDENT",
+        },
+      });
+    }
+
+    return res.status(200).json(buildAuthResponse(user, "Google login successful"));
+  } catch (error) {
+    console.error("Google login error:", error);
+
+    return res.status(401).json({
+      success: false,
+      message: "Unable to authenticate with Google",
+    });
+  }
+};
 
 const forgotPassword = async (req, res) => {
   try {
@@ -286,6 +404,7 @@ const resetPassword = async (req, res) => {
 module.exports = {
   register,
   login,
+  googleAuth,
   forgotPassword,
   resetPassword,
 };

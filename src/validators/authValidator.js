@@ -42,6 +42,12 @@ const loginSchema = z.object({
     .min(1, "Password is required"),
 });
 
+const googleAuthSchema = z.object({
+  credential: z
+    .string()
+    .min(1, "Google credential is required"),
+});
+
 const updateProfileSchema = z.object({
   name: z
     .string()
