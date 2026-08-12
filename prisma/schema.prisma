@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -27,7 +28,7 @@ model Contact {
   createdAt DateTime @default(now())
 }
 
-enpx prisma generatenum UserRole {
+enum UserRole {
   STUDENT
   TEACHER
   ADMIN
