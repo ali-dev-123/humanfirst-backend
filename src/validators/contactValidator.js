@@ -1,7 +1,9 @@
+const { z } = require("zod");
+
 const contactSchema = z.object({
   name: z.string().trim().min(2).max(100),
 
-  email: z.email("Please enter a valid email address"),
+  email: z.string().trim().email("Please enter a valid email address"),
 
   institution: z.string().trim().max(200).optional().or(z.literal("")),
 
@@ -9,3 +11,7 @@ const contactSchema = z.object({
 
   message: z.string().trim().min(10).max(2000),
 });
+
+module.exports = {
+  contactSchema,
+};

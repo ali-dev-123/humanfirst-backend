@@ -8,7 +8,7 @@ const validate = require("../middleware/validate");
 
 const {
   contactSchema,
-} = require("../validators/authValidator");
+} = require("../validators/contactValidator");
 
 const router = express.Router();
 
