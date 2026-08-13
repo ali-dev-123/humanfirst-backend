@@ -29,8 +29,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-      // Allow requests without an origin
-      // (Postman, server-to-server requests, etc.)
       if (!origin) {
         return callback(null, true);
       }
@@ -48,7 +46,7 @@ app.use(
 );
 
 // Handle preflight requests
-app.options("*", cors());
+
 
 // ==========================================
 // MIDDLEWARE
