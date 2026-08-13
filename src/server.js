@@ -29,10 +29,12 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests without an origin
       if (!origin) {
         return callback(null, true);
       }
 
+      // Allow only trusted frontend origins
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
@@ -45,15 +47,17 @@ app.use(
   })
 );
 
-// Handle preflight requests
-
+// Handle CORS preflight requests
+app.options(/.*/, cors());
 
 // ==========================================
 // MIDDLEWARE
 // ==========================================
 
 app.use(express.json());
+
 app.use(helmet());
+
 app.use(apiLimiter);
 
 // ==========================================
@@ -61,9 +65,13 @@ app.use(apiLimiter);
 // ==========================================
 
 app.use("/api/auth", authRoutes);
+
 app.use("/api/users", userRoutes);
+
 app.use("/api/dashboard", dashboardRoutes);
+
 app.use("/api/contact", contactRoutes);
+
 app.use("/api/search", searchRoutes);
 
 // ==========================================
