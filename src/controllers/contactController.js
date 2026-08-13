@@ -1,9 +1,17 @@
 const prisma = require("../config/prisma");
+const { appendContactMessage } = require("../config/googleSheets");
 
 const submitContactForm = async (req, res) => {
   try {
-    const { name, email, subject, message } = req.body;
+    const {
+      name,
+      email,
+      institution,
+      subject,
+      message,
+    } = req.body;
 
+    // Save to existing database
     const contact = await prisma.contact.create({
       data: {
         name,
@@ -11,6 +19,15 @@ const submitContactForm = async (req, res) => {
         subject,
         message,
       },
+    });
+
+    // Save to Google Sheets
+    await appendContactMessage({
+      name,
+      email,
+      institution: institution || "",
+      subject,
+      message,
     });
 
     return res.status(201).json({
