@@ -72,6 +72,25 @@ const appendContactMessage = async ({
   });
 };
 
+const checkEmailExists = async (email) => {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "Sheet1!B:B",
+  });
+
+  const rows = res.data.values || [];
+
+  const existingEmails = rows
+    .flat()
+    .map((e) => (e || "").toLowerCase().trim())
+    .filter(Boolean);
+
+  return existingEmails.includes(normalizedEmail);
+};
+
 module.exports = {
   appendContactMessage,
+  checkEmailExists,
 };
